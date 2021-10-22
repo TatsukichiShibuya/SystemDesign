@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>メッセージ入力画面　(stateless)</title>
+    </head>
+    <body>
+        <h2>アンケート(3/3)</h2><hr><br>
+        <form id="impressions-form" action="/result" method="POST">
+            <!-- input -->
+            <label for="message">メッセージ:</label><br>
+            <textarea name="message" form="impressions-form">{{ .DefaultMessage }}</textarea><hr>
+            <!-- buttons -->
+            <input type="submit" value="back" formaction="/date-form">
+            <input type="submit" value="next" formaction="/check-form">
+            <!-- data -->
+            <input type="hidden" name="name" value={{ .Name }}>
+            <input type="hidden" name="date" value={{ .Date }}>
+            <input type="hidden" name="message" value={{ .Message }}>
+        </form>
+    </body>
+</html>

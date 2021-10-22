@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>名前入力画面 (stateless)</title>
+    </head>
+    <body>
+        <h2>アンケート(1/3)</h2><hr><br>
+        <form action="?" method="POST">
+            <!-- input -->
+            <label for="name">名前:</label>
+            <input type="text" name="name" value={{ .DefaultName }}><hr>
+            <!-- buttons -->
+            <input type="submit" value="back" formaction="/message-form" disabled>
+            <input type="submit" value="next" formaction="/date-form">
+            <!-- data -->
+            <input type="hidden" name="name" value={{ .Name }}>
+            <input type="hidden" name="date" value={{ .Date }}>
+            <input type="hidden" name="message" value={{ .Message }}>
+        </form>
+    </body>
+</html>
