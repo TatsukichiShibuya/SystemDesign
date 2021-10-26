@@ -60,7 +60,7 @@ func nameHandler(ctx *gin.Context) {
     _ = ctx.Bind(&data)
     initData(&data)
 
-		// save user's input
+    // save user's input
     saveData(&data)
 
     // show web page
