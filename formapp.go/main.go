@@ -10,6 +10,7 @@ import (
 const port = 8000
 
 func main() {
+
     // initialize Gin engine
     engine := gin.Default()
 		engine.LoadHTMLGlob("templates/*.html")

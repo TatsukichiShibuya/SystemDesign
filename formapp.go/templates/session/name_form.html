@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>名前入力画面 (session)</title>
+    </head>
+    <body>
+        <h2>アンケート(1/3)</h2><hr><br>
+        <form action="?" method="POST">
+            <!-- input -->
+            <label for="name">名前:</label>
+            <input type="text" name="name" value={{ .Name }}><hr>
+            <!-- buttons -->
+            <input type="submit" value="back" formaction="/message-form" disabled>
+            <input type="submit" value="next" formaction="/date-form">
+        </form>
+    </body>
+</html>
