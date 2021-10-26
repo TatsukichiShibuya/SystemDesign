@@ -31,23 +31,23 @@ type FormData struct {
     NewName string `form:"newname"`
     NewDate string `form:"newdate"`
     NewMessage string `form:"newmessage"`
-		Name string `form:"name"`
+    Name string `form:"name"`
     Date string `form:"date"`
     Message string `form:"message"`
 }
 
 func initData(data *FormData) {
-		// initialize data with default values
+    // initialize data with default values
     if data.Name == "" { data.Name = "" }
     if data.Date == "" { data.Date = "2000-01-01" }
     if data.Message == "" { data.Message = ""}
 }
 
 func saveData(data *FormData) {
-		// if new values exist, replace old data
+    // if new values exist, replace old data
     if data.NewName != "" { data.Name = data.NewName }
-		if data.NewDate != "" { data.Date = data.NewDate }
-		if data.NewMessage != "" { data.Message = data.NewMessage}
+    if data.NewDate != "" { data.Date = data.NewDate }
+    if data.NewMessage != "" { data.Message = data.NewMessage}
 }
 
 func rootHandler(ctx *gin.Context) {
@@ -58,12 +58,12 @@ func nameHandler(ctx *gin.Context) {
     // get data
     var data FormData
     _ = ctx.Bind(&data)
-		initData(&data)
+    initData(&data)
 
-		// save data
-		saveData(&data)
+		// save user's input
+    saveData(&data)
 
-		// show web page
+    // show web page
     ctx.HTML(http.StatusOK, "name_form.html", &data)
 }
 
@@ -73,35 +73,35 @@ func dateHandler(ctx *gin.Context) {
     _ = ctx.Bind(&data)
     initData(&data)
 
-    // save data
+    // save user's input
     saveData(&data)
 
-		// show web page
+    // show web page
     ctx.HTML(http.StatusOK, "date_form.html", &data)
 }
 
 func messageHandler(ctx *gin.Context) {
-		// get data
-		var data FormData
-		_ = ctx.Bind(&data)
-		initData(&data)
+    // get data
+    var data FormData
+    _ = ctx.Bind(&data)
+    initData(&data)
 
-		// save data
-		saveData(&data)
+    // save user's input
+    saveData(&data)
 
-		// show web page
+    // show web page
     ctx.HTML(http.StatusOK, "message_form.html", &data)
 }
 
 func checkHandler(ctx *gin.Context) {
-		// get data
-		var data FormData
-		_ = ctx.Bind(&data)
-		initData(&data)
+    // get data
+    var data FormData
+    _ = ctx.Bind(&data)
+    initData(&data)
 
-		// save data
-		saveData(&data)
+    // save user's input
+    saveData(&data)
 
-		// show web page
+    // show web page
     ctx.HTML(http.StatusOK, "check_form.html", &data)
 }
