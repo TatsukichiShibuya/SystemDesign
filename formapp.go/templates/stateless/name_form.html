@@ -8,9 +8,9 @@
         <form action="?" method="POST">
             <!-- input -->
             <label for="name">名前:</label>
-            <input type="text" name="name" value={{ .DefaultName }}><hr>
+            <input type="text" name="newname" value={{ .Name }}><hr>
             <!-- buttons -->
-            <input type="submit" value="back" formaction="/message-form" disabled>
+            <input type="submit" value="back" formaction="/" disabled>
             <input type="submit" value="next" formaction="/date-form">
             <!-- data -->
             <input type="hidden" name="name" value={{ .Name }}>

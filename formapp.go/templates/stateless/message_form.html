@@ -5,10 +5,10 @@
     </head>
     <body>
         <h2>アンケート(3/3)</h2><hr><br>
-        <form id="impressions-form" action="/result" method="POST">
+        <form id="impression" action="/result" method="POST">
             <!-- input -->
             <label for="message">メッセージ:</label><br>
-            <textarea name="message" form="impressions-form">{{ .DefaultMessage }}</textarea><hr>
+            <textarea name="newmessage" form="impression">{{ .Message }}</textarea><hr>
             <!-- buttons -->
             <input type="submit" value="back" formaction="/date-form">
             <input type="submit" value="next" formaction="/check-form">
