@@ -31,7 +31,7 @@ func main() {
 
     // routing
     engine.GET("/", rootHandler)
-    engine.POST("/", registerHandler)
+    engine.POST("/", rootHandler)
 
     engine.POST("/name-form", nameHandler)
     engine.POST("/date-form", dateHandler)
@@ -49,14 +49,14 @@ func getCookie(ctx *gin.Context) string {
         id, _ := uuid.NewRandom()
         ctx.SetCookie(COOKIE_KEY, id.String(), 600, "/", "localhost", false, true)
         dataMap[id.String()] = &FormData{ Name: DEFAULT_NAME,
-															 			      Date: DEFAULT_DATE,
-															 		        Message: DEFAULT_MESSAGE }
+                                          Date: DEFAULT_DATE,
+                                          Message: DEFAULT_MESSAGE }
         return id.String()
     } else if _, exist := dataMap[cookie.Value]; !exist {
-    // cookie exists but haven't registered
-    dataMap[cookie.Value] = &FormData{ Name: DEFAULT_NAME,
-															 			   Date: DEFAULT_DATE,
-															 		     Message: DEFAULT_MESSAGE }
+        // cookie exists but haven't registered
+        dataMap[cookie.Value] = &FormData{ Name: DEFAULT_NAME,
+                                           Date: DEFAULT_DATE,
+                                           Message: DEFAULT_MESSAGE }
     }
     return cookie.Value
 }
@@ -70,65 +70,58 @@ func saveData(cookie string, data FormData) {
 
 
 func rootHandler(ctx *gin.Context) {
-		_ = getCookie(ctx)
-		ctx.HTML(http.StatusOK, "start.html", nil)
+    _ = getCookie(ctx)
+    ctx.HTML(http.StatusOK, "start.html", nil)
 }
 
 func nameHandler(ctx *gin.Context) {
-		// get data
+    // get data
     var data FormData
     _ = ctx.Bind(&data)
 
-		// save data
-		cookie := getCookie(ctx)
-		saveData(cookie, data)
+    // save data
+    cookie := getCookie(ctx)
+    saveData(cookie, data)
 
-		// show page
-		ctx.HTML(http.StatusOK, "name_form.html", dataMap[cookie])
+    // show web page
+    ctx.HTML(http.StatusOK, "name_form.html", dataMap[cookie])
 }
 
 func dateHandler(ctx *gin.Context) {
-		// get data
-		var data FormData
-		_ = ctx.Bind(&data)
+    // get data
+    var data FormData
+    _ = ctx.Bind(&data)
 
-		// save data
-		cookie := getCookie(ctx)
-		saveData(cookie, data)
+    // save data
+    cookie := getCookie(ctx)
+    saveData(cookie, data)
 
-		// show page
-		ctx.HTML(http.StatusOK, "date_form.html", dataMap[cookie])
+    // show web page
+    ctx.HTML(http.StatusOK, "date_form.html", dataMap[cookie])
 }
 
 func messageHandler(ctx *gin.Context) {
-		// get data
-		var data FormData
-		_ = ctx.Bind(&data)
+    // get data
+    var data FormData
+    _ = ctx.Bind(&data)
 
-		// save data
-		cookie := getCookie(ctx)
-		saveData(cookie, data)
+    // save data
+    cookie := getCookie(ctx)
+    saveData(cookie, data)
 
-		// show page
-		ctx.HTML(http.StatusOK, "message_form.html", dataMap[cookie])
+    // show web page
+    ctx.HTML(http.StatusOK, "message_form.html", dataMap[cookie])
 }
 
 func checkHandler(ctx *gin.Context) {
-		// get data
-		var data FormData
-		_ = ctx.Bind(&data)
+    // get data
+    var data FormData
+    _ = ctx.Bind(&data)
 
-		// save data
-		cookie := getCookie(ctx)
-		saveData(cookie, data)
+    // save data
+    cookie := getCookie(ctx)
+    saveData(cookie, data)
 
-		// show page
+    // show web page
     ctx.HTML(http.StatusOK, "check_form.html", dataMap[cookie])
-}
-
-func registerHandler(ctx *gin.Context) {
-		// 登録処理をする.ここではデータ削除
-		cookie := getCookie(ctx)
-		delete(dataMap, cookie)
-		ctx.HTML(http.StatusOK, "start.html", nil)
 }
