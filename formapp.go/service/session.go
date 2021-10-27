@@ -1,19 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-  "github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+    "fmt"
+    "net/http"
+    "github.com/gin-gonic/gin"
+    "github.com/google/uuid"
 )
 
 type FormData struct {
-		Name string `form:"name"`
-		Date string `form:"date"`
-		Message string `form:"message"`
+    Name string `form:"name"`
+    Date string `form:"date"`
+    Message string `form:"message"`
 }
 var dataMap map[string]*FormData
-const DEFAULT_NAME = "NONAME"
+const DEFAULT_NAME = ""
 const DEFAULT_DATE = "2000-01-01"
 const DEFAULT_MESSAGE = ""
 
@@ -22,16 +22,16 @@ const port = 8000
 const COOKIE_KEY = "id"
 
 func main() {
-		// initialize HashMap
-		dataMap = make(map[string]*FormData)
+    // initialize HashMap
+    dataMap = make(map[string]*FormData)
 
     // initialize Gin engine
     engine := gin.Default()
-		engine.LoadHTMLGlob("templates/session/*.html")
+    engine.LoadHTMLGlob("templates/session/*.html")
 
     // routing
     engine.GET("/", rootHandler)
-		engine.POST("/", registerHandler)
+    engine.POST("/", registerHandler)
 
     engine.POST("/name-form", nameHandler)
     engine.POST("/date-form", dateHandler)
@@ -43,35 +43,29 @@ func main() {
 }
 
 func getCookie(ctx *gin.Context) string {
-	cookie, err := ctx.Request.Cookie(COOKIE_KEY)
-	if err != nil {
-		// 新しいセッション
-		id, _ := uuid.NewRandom()
-		ctx.SetCookie(COOKIE_KEY, id.String(), 600, "/", "localhost", false, true)
-		dataMap[id.String()] = &FormData{ Name: DEFAULT_NAME,
-															 			  Date: DEFAULT_DATE,
-															 		    Message: DEFAULT_MESSAGE }
-		return id.String()
-	} else if _, exist := dataMap[cookie.Value]; !exist {
-		// クッキーが存在するがデータがない
-		//（サーバーが落ちてクライアント側のクッキーがまだ有効な状態）
-		dataMap[cookie.Value] = &FormData{ Name: DEFAULT_NAME,
-															 			  Date: DEFAULT_DATE,
-															 		    Message: DEFAULT_MESSAGE }
-	}
-	return cookie.Value
+    cookie, err := ctx.Request.Cookie(COOKIE_KEY)
+    if err != nil {
+        // new session
+        id, _ := uuid.NewRandom()
+        ctx.SetCookie(COOKIE_KEY, id.String(), 600, "/", "localhost", false, true)
+        dataMap[id.String()] = &FormData{ Name: DEFAULT_NAME,
+															 			      Date: DEFAULT_DATE,
+															 		        Message: DEFAULT_MESSAGE }
+        return id.String()
+    } else if _, exist := dataMap[cookie.Value]; !exist {
+    // cookie exists but haven't registered
+    dataMap[cookie.Value] = &FormData{ Name: DEFAULT_NAME,
+															 			   Date: DEFAULT_DATE,
+															 		     Message: DEFAULT_MESSAGE }
+    }
+    return cookie.Value
 }
 
 func saveData(cookie string, data FormData) {
-		if data.Name != "" {
-			dataMap[cookie].Name = data.Name
-		}
-		if data.Date != "" {
-			dataMap[cookie].Date = data.Date
-		}
-		if data.Message != "" {
-			dataMap[cookie].Message = data.Message
-		}
+    // if new values exist, replace old data
+    if data.Name != "" { dataMap[cookie].Name = data.Name }
+    if data.Date != "" { dataMap[cookie].Date = data.Date }
+    if data.Message != "" { dataMap[cookie].Message = data.Message }
 }
 
 
