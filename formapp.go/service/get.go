@@ -35,6 +35,7 @@ func sampleHandler(ctx *gin.Context) {
     // get data
     var data Data
     _ = ctx.Bind(&data)
+    //data.Amount = ctx.Query("amount")
 
     // show web page
     ctx.HTML(http.StatusOK, "sample.html", &data)
