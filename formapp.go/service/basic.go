@@ -27,20 +27,12 @@ func main() {
     engine.Run(fmt.Sprintf(":%d", port))
 }
 
-type Data struct {
-    Amount string `form:"amount"`
-}
-
 func rootHandler(ctx *gin.Context) {
+    // show web page
     ctx.HTML(http.StatusOK, "start.html", nil)
 }
 
 func secretHandler(ctx *gin.Context) {
-    // get data
-    var data Data
-    _ = ctx.Bind(&data)
-    //data.Amount = ctx.Query("amount")
-
     // show web page
-    ctx.HTML(http.StatusOK, "secret.html", &data)
+    ctx.HTML(http.StatusOK, "secret.html", nil)
 }
