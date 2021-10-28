@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>生年月日入力画面 (session)</title>
+    </head>
+    <body>
+        <h2>アンケート(2/3)</h2><hr><br>
+        <form action="/message-form" method="POST">
+            <!-- input -->
+            <label for="date">生年月日:</label>
+            <input type="date" name="date" value={{ .Date }}><hr>
+            <!-- buttons -->
+            <input type="submit" value="back" formaction="/name-form">
+            <input type="submit" value="next" formaction="/message-form">
+        </form>
+    </body>
+</html>
