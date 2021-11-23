@@ -1,0 +1,15 @@
+{{ template "header" . }}
+<h1>TODO List</h1>
+<form action="/login" method="POST">
+    <!-- input -->
+    <label for="username">名前:</label>
+    <input type="text" name="username"><br>
+    <label for="passward">パスワード:</label>
+    <input type="text" name="passward"><br>
+    <!-- buttons -->
+    <input type="submit" value="login" name="submit">
+    <input type="submit" value="register" name="submit"><br>
+    <!-- message -->
+    {{ .Message }}
+</form>
+{{ template "footer" }}

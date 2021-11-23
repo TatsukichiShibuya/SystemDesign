@@ -1,0 +1,20 @@
+{{ template "header" . }}
+<h1>TODO List</h1>
+<form action="/info" method="POST">
+    <!-- input -->
+    <label for="oldname">現在の名前:</label>
+    <input type="text" name="oldname" value={{ .Username }} readonly><br>
+    <label for="newname">新しい名前:</label>
+    <input type="text" name="newname"><br>
+    <label for="oldpass">現在のパスワード:</label>
+    <input type="text" name="oldpass"> (必須項目)<br>
+    <label for="newpass">新しいパスワード:</label>
+    <input type="text" name="newpass"><br>
+    <!-- buttons -->
+    <input type="submit" value="back" name="submit">
+    <input type="submit" value="delete" name="submit">
+    <input type="submit" value="update" name="submit"><br>
+    <!-- message -->
+    {{ .Message }}
+</form>
+{{ template "footer" }}

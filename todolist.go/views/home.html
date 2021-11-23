@@ -1,0 +1,11 @@
+{{ template "header" . }}
+<h1>TODO List</h1>
+<form action="/" method="POST">
+    <label for="username">user: {{ .Username}}</label>
+    <input type="submit" value="logout" name="submit">
+</form>
+<ul>
+    <li><a href="/list">登録済みタスク一覧</a></li>
+    <li><a href="/info">ユーザー情報変更</a></li>
+</ul>
+{{ template "footer" }}
