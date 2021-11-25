@@ -60,7 +60,7 @@ func PostLogin(ctx *gin.Context) {
 				message = "ユーザー名はすでに使用されています"
 			}
 		}
-	}else {
+	} else {
 		fmt.Println("err")
 		return
 	}
@@ -69,6 +69,7 @@ func PostLogin(ctx *gin.Context) {
 		// move to /home
 		session := sessions.Default(ctx)
 	  session.Set("username", username)
+		session.Options(sessions.Options{ MaxAge: 60000, }) // 10 minutes
 		session.Save()
 		ctx.Redirect(http.StatusSeeOther, "/")
 	} else {

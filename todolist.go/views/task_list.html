@@ -1,23 +1,63 @@
+<!-- header -->
 {{ template "header" . }}
-<h1>List of tasks</h1>
-{{ if not .Tasks }}
-<p>登録データがありません．</p>
-{{ else }}
-<table>
-    <tr>
-        <th>ID</th>
-        <th>タイトル</th>
-        <th>登録日</th>
-        <th>状態</th>
+
+<!-- contents-->
+<table class="w3-table w3-striped w3-border w3-centered">
+    <tr class="w3-teal">
+        <th width="30%">タイトル</th>
+        <th width="30%">登録日</th>
+        <th width="10%">状態</th>
+        <th width="30%">選択<th>
     </tr>
-    {{ range $task := .Tasks }}
+    {{ if .Tasks }}{{ range $task := .Tasks }}
     <tr>
-        <td><a href="/task/{{ $task.ID }}">{{ $task.ID }}</a></td>
-        <td>{{ $task.Title }}</td>
-        <td>{{ $task.CreatedAt }}</td>
-        <td>{{ if $task.IsDone }}済{{ end }}</td>
+        <td align="center" class="w3-text-teal"><a href="/task/{{ $task.ID }}">{{ $task.Title }}</a></td>
+        <td align="center" class="w3-text-teal">{{ $task.CreatedAt }}</td>
+        <td align="center" class="w3-text-teal">{{ if $task.IsDone }}済{{ else }}{{ end }}</td>
+        <td align="center" class="w3-text-teal"><input type="checkbox" name="check[]" value={{ $task.ID }} id={{ $task.ID}} form="form"><td>
     </tr>
-    {{ end }}
-</table>
-{{ end }}
+    {{ end }}{{ end }}
+
+</table><br><br><br>
+<div class="w3-display-container">
+  <a href="/newtask"><button class="w3-btn w3-xlarge w3-circle w3-teal w3-display-middle">+</button></a>
+  <form id="form" action="/list" method="POST" class="w3-display-right">
+      <!-- buttons -->
+      <input type="submit" value="complete" name="submit" class="w3-btn w3-teal">
+      <input type="submit" value="delete" name="submit" class="w3-btn w3-blue-grey">
+  </form>
+</div>
+<br><hr>
+
+<div class="w3-container w3-blue-grey" ><h4>詳細検索</h4></div>
+<div class="w3-container w3-text-blue-grey w3-border"><br>
+<form id="search" action="/list" method="GET">
+    <!-- buttons -->
+    <div class="w3-row-padding">
+      <div class="w3-half">
+        <label for="title" class="w3-text-blue-grey">タイトルに以下を含む</label>
+        <input type="search" name="title" class="w3-input w3-border w3-light-grey"><br>
+      </div>
+      <div class="w3-half">
+        <label for="isdone" class="w3-text-blue-grey">状態</label><br>
+        <input type="radio" id="done" name="isdone" value="done">
+        <label for="done" class="w3-text-blue-grey">完了のみ</label><br>
+        <input type="radio" id="undone" name="isdone" value="undone">
+        <label for="undone" class="w3-text-blue-grey">未完了のみ</label><br>
+        <input type="radio" id="both" name="isdone" value="both">
+        <label for="both" class="w3-text-blue-grey">両方</label><br><br>
+      </div>
+    </div><br>
+    <div class="w3-display-container">
+    <input type="submit" value="search" name="submit" class="w3-btn w3-blue-grey w3-display-middle">
+    </div><br>
+</form><br>
+</div>
+
+<!-- footer -->
+<hr><br><br>
+<div class="w3-display-container">
+<a href="/"><i class="fa fa-home w3-xxlarge w3-text-teal w3-display-bottommiddle">Home</i></a>
+<a href="/"><i class="fa fa-arrow-left w3-xxlarge w3-text-teal w3-display-bottomleft">Back</i></a>
+</div>
 {{ template "footer" }}

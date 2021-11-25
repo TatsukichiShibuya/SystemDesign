@@ -1,0 +1,33 @@
+<!-- header -->
+{{ template "header" . }}
+
+<!-- contents-->
+<form id="update" action="?" method="POST" class="w3-container">
+    <!-- input -->
+    <label for="title" class="w3-text-teal">タイトル</label>
+    <input type="text" name="title" value={{ .Task.Title }} class="w3-input w3-border w3-light-grey"><br>
+
+    <label for="title" class="w3-text-teal">登録日</label>
+    <input type="text" name="title" value={{ .Task.CreatedAt }} readonly class="w3-input w3-border w3-light-grey"><br>
+
+    <label for="title" class="w3-text-teal">状態</label><br>
+    <input type="radio" form="update" id="done" name="isdone" value="done" {{ if .Task.IsDone }}checked{{ end }}>
+    <label for="done">完了</label>
+    <input type="radio" form="update" id="undone" name="isdone" value="undone" {{ if not .Task.IsDone }}checked{{ end }}>
+    <label for="undone">未完了</label><br><br>
+
+    <label for="detail" class="w3-text-teal">詳細</label><br>
+    <textarea name="detail" form="update" rows="4" cols="50" class="w3-input w3-border w3-light-grey">{{ .Task.Detail }}</textarea><br>
+    <!-- buttons -->
+    <input type="submit" value="update" name="submit" class="w3-btn w3-teal">
+    <!-- message -->
+    {{ .Message }}
+</form>
+
+<!-- footer -->
+<hr><br><br>
+<div class="w3-display-container">
+<a href="/"><i class="fa fa-home w3-xxlarge w3-text-teal w3-display-bottommiddle">Home</i></a>
+<a href="/list"><i class="fa fa-arrow-left w3-xxlarge w3-text-teal w3-display-bottomleft">Back</i></a>
+</div>
+{{ template "footer" }}

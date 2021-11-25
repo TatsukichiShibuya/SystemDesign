@@ -1,11 +1,15 @@
 {{ template "header" . }}
-<h1>TODO List</h1>
-<form action="/" method="POST">
-    <label for="username">user: {{ .Username}}</label>
-    <input type="submit" value="logout" name="submit">
-</form>
-<ul>
-    <li><a href="/list">登録済みタスク一覧</a></li>
-    <li><a href="/info">ユーザー情報変更</a></li>
-</ul>
+<!-- contents-->
+<div class="w3-bar-block w3-text-teal w3-border">
+    <div class="w3-bar-item w3-center w3-teal"><h5>メニュー</h5></div>
+    <a href="/list" class="w3-bar-item w3-button w3-center"><h5>登録済みタスク一覧</h5></a>
+    <a href="/info" class="w3-bar-item w3-button w3-center"><h5>ユーザー情報変更</h5></a>
+    <a href="/logout" class="w3-bar-item w3-button w3-center"><h5>ログアウト</h5></a>
+</div>
+<!-- footer -->
+<hr><br><br>
+<div class="w3-display-container">
+<a href="/"><i class="fa fa-home w3-xxlarge w3-text-teal w3-display-bottommiddle">Home</i></a>
+<a href="/login"><i class="fa fa-arrow-left w3-xxlarge w3-text-teal w3-display-bottomleft">Back</i></a>
+</div>
 {{ template "footer" }}

@@ -1,58 +1,99 @@
 package service
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/sessions"
+
 	database "todolist.go/db"
 )
 
 // TaskList renders list of tasks in DB
-func TaskList(ctx *gin.Context) {
-	// Get DB connection
-	db, err := database.GetConnection()
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, err.Error())
-		return
-	}
+func GetList(ctx *gin.Context) {
+	if sessionCheck(ctx) {
+		// Get DB connection
+		db, err := database.GetConnection()
+		if err != nil {
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
+		}
 
-	// Get tasks in DB
-	var tasks []database.Task
-	err = db.Select(&tasks, "SELECT * FROM tasks") // Use DB#Select for multiple entries
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, err.Error())
-		return
-	}
+		// Get username
+		session := sessions.Default(ctx)
+		username := session.Get("username")
 
-	// Render tasks
-	ctx.HTML(http.StatusOK, "task_list.html", gin.H{"Title": "Task list", "Tasks": tasks})
+		// Get Query Parameters
+		title, _ := ctx.GetQuery("title")
+		isdone, _ := ctx.GetQuery("isdone")
+
+		query := "SELECT * FROM tasks WHERE id in (SELECT taskid FROM owners WHERE username=?)"
+		query += fmt.Sprintf(" AND title LIKE '%%%s%%'", title)
+		if isdone == "done" {
+			query += " AND is_done=b'1'"
+		} else if isdone == "undone" {
+			query += " AND is_done=b'0'"
+		} else if isdone == "both" {
+			// nothing to do
+		} else {
+			// regard as "both"
+		}
+
+		// Get tasks in DB
+		var tasks []database.Task
+		err = db.Select(&tasks, query, username)
+		if err != nil {
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		List(ctx, tasks)
+	} else {
+		ctx.Redirect(http.StatusSeeOther, "/login")
+	}
 }
 
-// ShowTask renders a task with given ID
-func ShowTask(ctx *gin.Context) {
-	// Get DB connection
-	db, err := database.GetConnection()
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, err.Error())
-		return
-	}
+type CheckBox struct {
+	CheckIDs []string `form:"check[]"`
+}
 
-	// parse ID given as a parameter
-	id, err := strconv.Atoi(ctx.Param("id"))
-	if err != nil {
-		ctx.String(http.StatusBadRequest, err.Error())
-		return
-	}
+func PostList(ctx *gin.Context) {
+	if sessionCheck(ctx) {
+		// Get DB connection
+		db, err := database.GetConnection()
+		if err != nil {
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
+		}
 
-	// Get a task with given ID
-	var task database.Task
-	err = db.Get(&task, "SELECT * FROM tasks WHERE id=?", id) // Use DB#Get for one entry
-	if err != nil {
-		ctx.String(http.StatusBadRequest, err.Error())
-		return
-	}
+		submit, _ := ctx.GetPostForm("submit")
+		var checkbox CheckBox
+	 	ctx.Bind(&checkbox)
 
-	// Render task
-	ctx.String(http.StatusOK, task.Title)
+		if submit == "complete" {
+			for i:=0; i<len(checkbox.CheckIDs); i++ {
+				id := checkbox.CheckIDs[i]
+				data := map[string]interface{}{ "id": id }
+				_, _ = db.NamedExec("UPDATE tasks SET is_done=b'1' WHERE id=:id", data)
+			}
+		} else if submit == "delete" {
+			for i:=0; i<len(checkbox.CheckIDs); i++ {
+				id := checkbox.CheckIDs[i]
+				data := map[string]interface{}{ "taskid": id }
+				_, _ = db.NamedExec("DELETE FROM owners WHERE taskid=:taskid", data)
+			}
+		} else {
+			fmt.Println("err")
+			return
+		}
+
+		GetList(ctx)
+	} else {
+		ctx.Redirect(http.StatusSeeOther, "/login")
+	}
+}
+
+func List(ctx *gin.Context, tasks []database.Task) {
+	ctx.HTML(http.StatusOK, "task_list.html", gin.H{"Title": "TASK LIST", "Tasks": tasks})
 }

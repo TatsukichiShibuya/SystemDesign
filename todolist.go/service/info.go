@@ -3,8 +3,10 @@ package service
 import (
 	"fmt"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/sessions"
+
 	database "todolist.go/db"
 )
 
@@ -32,10 +34,7 @@ func PostInfo(ctx *gin.Context) {
 		newpass, _ := ctx.GetPostForm("newpass")
 		message := ""
 
-		if submit == "back" {
-			ctx.Redirect(http.StatusSeeOther, "/")
-			return
-		} else if submit == "delete" {
+		if submit == "delete" {
 			var user database.User
 			err := db.Get(&user, "SELECT * FROM users WHERE username=?", oldname)
 			if err != nil {
@@ -45,8 +44,10 @@ func PostInfo(ctx *gin.Context) {
 			// check passward
 			if user.Passward == hash(oldpass) {
 				// delete user
-				data := map[string]interface{}{ "username": oldname}
+				data := map[string]interface{}{ "username": oldname }
 				_, _ = db.NamedExec("DELETE FROM users WHERE username=:username", data)
+				// delete owner
+				_, _ = db.NamedExec("DELETE FROM owners WHERE username=:username", data)
 				// logout
 				session := sessions.Default(ctx)
 			  session.Delete("username")
@@ -78,6 +79,8 @@ func PostInfo(ctx *gin.Context) {
 							session := sessions.Default(ctx)
 						  session.Set("username", newname)
 							session.Save()
+							// update owners
+							_, _ = db.NamedExec("UPDATE owners SET username=:newname WHERE username=:oldname", data)
 							message += "名前を変更しました"
 						} else {
 							message = "ユーザー名はすでに使用されています"
@@ -113,7 +116,7 @@ func PostInfo(ctx *gin.Context) {
 func Info(ctx *gin.Context, message string) {
 	session := sessions.Default(ctx)
 	username := session.Get("username")
-	ctx.HTML(http.StatusOK, "info.html", gin.H{"Title": "INFO",
-																						 "Username": username,
-																					   "Message": message})
+	ctx.HTML(http.StatusOK, "info.html", gin.H{ "Title": "USER INFO",
+																						  "Username": username,
+																					    "Message": message })
 }

@@ -1,0 +1,23 @@
+<!-- header -->
+{{ template "header" . }}
+
+<!-- contents-->
+<form id="newtask" action="/newtask" method="POST" class="w3-container">
+    <!-- input -->
+    <label for="title" class="w3-text-teal">タイトル</label>
+    <input type="text" name="title" class="w3-input w3-border w3-light-grey"><br>
+    <label for="detail" class="w3-text-teal">詳細</label><br>
+    <textarea name="detail" form="newtask" rows="4" cols="50" class="w3-input w3-border w3-light-grey"></textarea><br>
+    <!-- buttons -->
+    <input type="submit" value="register" name="submit" class="w3-btn w3-teal">
+    <!-- message -->
+    {{ .Message }}
+</form>
+
+<!-- footer -->
+<hr><br><br>
+<div class="w3-display-container">
+<a href="/"><i class="fa fa-home w3-xxlarge w3-text-teal w3-display-bottommiddle">Home</i></a>
+<a href="/list"><i class="fa fa-arrow-left w3-xxlarge w3-text-teal w3-display-bottomleft">Back</i></a>
+</div>
+{{ template "footer" }}

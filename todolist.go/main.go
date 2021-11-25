@@ -44,8 +44,17 @@ func main() {
 	engine.GET("/info", service.GetInfo)
 	engine.POST("/info", service.PostInfo)
 
-	engine.GET("/list", service.TaskList)
-	engine.GET("/task/:id", service.ShowTask) // ":id" is a parameter
+	engine.GET("/list", service.GetList)
+	engine.POST("/list", service.PostList)
+
+	engine.GET("/task/:id", service.GetTask)
+	engine.POST("/task/:id", service.PostTask)
+
+	engine.GET("/newtask", service.GetNewtask)
+	engine.POST("/newtask", service.PostNewtask)
+
+	engine.GET("/logout", service.GetLogout)
+	engine.POST("/logout", service.GetLogout)
 
 	// start server
 	engine.Run(fmt.Sprintf(":%d", port))
