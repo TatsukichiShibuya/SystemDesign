@@ -45,18 +45,22 @@ func PostLogin(ctx *gin.Context) {
 			}
 		} else if submit == "register" {
 			// check if username is not used
-			var user database.User
-			err = db.Get(&user, "SELECT * FROM users WHERE username=?", username)
-			if err != nil {
-				// register new user
-				data := map[string]interface{}{ "username": username, "passward": hash(passward) }
-				_, err = db.NamedExec("INSERT INTO users (username, passward) VALUES (:username, :passward)", data)
-				if err != nil {
-					ctx.String(http.StatusInternalServerError, err.Error())
-					return
-				}
+			if !checkname(username) {
+				message = "ユーザー名には（アルファベット，数字，ひらがな，カタカナ，漢字）のみ使えます"
 			} else {
-				message = "指定されたユーザー名はすでに使用されています"
+				var user database.User
+				err = db.Get(&user, "SELECT * FROM users WHERE username=?", username)
+				if err != nil {
+					// register new user
+					data := map[string]interface{}{ "username": username, "passward": hash(passward) }
+					_, err = db.NamedExec("INSERT INTO users (username, passward) VALUES (:username, :passward)", data)
+					if err != nil {
+						ctx.String(http.StatusInternalServerError, err.Error())
+						return
+					}
+				} else {
+					message = "指定されたユーザー名はすでに使用されています"
+				}
 			}
 		} else {
 			ctx.String(http.StatusBadRequest, "不正なリクエスト")

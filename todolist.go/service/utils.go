@@ -4,10 +4,13 @@ import (
 	"fmt"
 	s "sort"
 	"time"
+	"strings"
+	"unicode"
 	"crypto/sha256"
 
 	"github.com/gin-gonic/gin"
   "github.com/gin-contrib/sessions"
+	"github.com/jmoiron/sqlx"
 
 	database "todolist.go/db"
 )
@@ -22,6 +25,44 @@ func hash(passward string) string {
 	return fmt.Sprintf("%x", h)
 }
 
+func checkname(username string) bool {
+	res := true
+	for _, c := range username {
+		ok := false
+		ok = ok || unicode.In(c, unicode.Hiragana)
+		ok = ok || unicode.In(c, unicode.Katakana)
+		ok = ok || unicode.In(c, unicode.Han)
+		ok = ok || unicode.IsDigit(c)
+		ok = ok || unicode.IsLetter(c)
+		res = res && ok
+	}
+	return res
+}
+
+func parseUsers(users string) []string {
+	var res []string
+	if users == "" {
+		return res
+	} else {
+		return strings.Split(users, ",")
+	}
+}
+
+func allExist(users []string, db *sqlx.DB) bool {
+	var user database.User
+	for _, username := range users {
+		if checkname(username) {
+			err := db.Get(&user, "SELECT * FROM users WHERE username=?", username)
+			if err != nil {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	return true
+}
+
 type FormatedTask struct {
 	ID             uint64
 	Title          string
@@ -31,11 +72,13 @@ type FormatedTask struct {
 	Deadline_html  string
 	HasDeadline    bool
 	Limit				   string
+	IsShared       bool
+	SharedUsers    string
 	IsDone         bool
 	Detail         string
 }
 
-func formatTask(task database.Task) FormatedTask {
+func formatTask(task database.Task, ctx *gin.Context, db *sqlx.DB, username string) (FormatedTask, error) {
 	var ftask FormatedTask
 
 	ftask.ID = task.ID
@@ -50,29 +93,62 @@ func formatTask(task database.Task) FormatedTask {
 		ftask.HasDeadline = false
 	}
 	ftask.Limit = culcLimit(task.Deadline)
+
+	var owners []database.Owner
+	err := db.Select(&owners, "SELECT * FROM owners WHERE taskid=?", task.ID)
+	if err != nil {
+		return ftask, err
+	}
+	ftask.IsShared = (len(owners)>1)
+	ftask.SharedUsers = ""
+	for _, owner := range owners {
+		if owner.Username != username {
+			if ftask.SharedUsers != "" {
+				ftask.SharedUsers += ","
+			}
+			ftask.SharedUsers += owner.Username
+		}
+	}
+
 	ftask.IsDone = task.IsDone
 	ftask.Detail = task.Detail
 
-	return ftask
+	return ftask, nil
 }
 
-func formatTasks(tasks []database.Task) []FormatedTask {
+func formatTasks(tasks []database.Task, ctx *gin.Context) ([]FormatedTask, error) {
 	ftasks := make([]FormatedTask, len(tasks))
 
-	for i:=0; i<len(tasks); i++ {
-		ftasks[i] = formatTask(tasks[i])
+	// Get DB connection
+	db, err := database.GetConnection()
+	if err != nil {
+		return ftasks, err
 	}
 
-	return ftasks
+	session := sessions.Default(ctx)
+	username := session.Get("username").(string)
+
+	for i:=0; i<len(tasks); i++ {
+		ftasks[i], err = formatTask(tasks[i], ctx, db, username)
+		if err != nil {
+			return ftasks, err
+		}
+	}
+
+	return ftasks, nil
 }
 
-func formatTasksWithOption(tasks []database.Task, ctx *gin.Context) []FormatedTask {
+func formatTasksWithOption(tasks []database.Task, ctx *gin.Context) ([]FormatedTask, error) {
 	var ftasksWO []FormatedTask
 
 	deadline, _ := ctx.GetQuery("deadline")
 	sort, _ := ctx.GetQuery("sort")
 
-	ftasks := formatTasks(tasks)
+	ftasks, err := formatTasks(tasks, ctx)
+	if err != nil {
+		return ftasksWO, err
+	}
+
 	if deadline == "yes" {
 		for i:=0; i<len(ftasks); i++ {
 			if ftasks[i].HasDeadline {
@@ -96,12 +172,24 @@ func formatTasksWithOption(tasks []database.Task, ctx *gin.Context) []FormatedTa
 	} else if sort == "reg_late" {
 		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].CreatedAt > ftasksWO[j].CreatedAt })
 	} else if sort == "dead_early" {
-		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].Deadline < ftasksWO[j].Deadline })
+		s.SliceStable(ftasksWO, func(i, j int) bool {
+			if (ftasksWO[i].HasDeadline&&ftasksWO[j].HasDeadline) || (!ftasksWO[i].HasDeadline&&!ftasksWO[j].HasDeadline){
+				return ftasksWO[i].Deadline < ftasksWO[j].Deadline
+			} else {
+				return ftasksWO[i].HasDeadline
+			}
+		})
 	} else if sort == "dead_late" {
-		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].Deadline > ftasksWO[j].Deadline })
+		s.SliceStable(ftasksWO, func(i, j int) bool {
+			if (ftasksWO[i].HasDeadline&&ftasksWO[j].HasDeadline) || (!ftasksWO[i].HasDeadline&&!ftasksWO[j].HasDeadline){
+				return ftasksWO[i].Deadline > ftasksWO[j].Deadline
+			} else {
+				return ftasksWO[i].HasDeadline
+			}
+		})
 	}
 
-	return ftasksWO
+	return ftasksWO, nil
 }
 
 func parseDeadline(deadline string) time.Time {

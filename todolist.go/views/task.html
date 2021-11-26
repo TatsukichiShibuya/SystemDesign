@@ -13,6 +13,9 @@
     <label for="deadline" class="w3-text-teal">締切</label><br>
     <input type="datetime-local" name="deadline" class="w3-input w3-border w3-light-grey" max="2030-12-31T23:59:59" min="2021-11-01T00:00:00" value={{ .Task.Deadline_html}}><br>
 
+    <label for="share" class="w3-text-teal">共有しているユーザー</label>
+    <input type="text" name="share" class="w3-input w3-border w3-light-grey" {{ if .Task.IsShared }} value={{ .Task.SharedUsers }} {{ else }} placeholder="User1,ユーザー2" {{ end }}><br>
+
     <label for="isdone" class="w3-text-teal">状態</label><br>
     <input type="radio" form="update" id="done" name="isdone" value="done" {{ if .Task.IsDone }}checked{{ end }}>
     <label for="done">完了</label>

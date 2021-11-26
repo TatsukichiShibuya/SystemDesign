@@ -21,7 +21,7 @@ func GetList(ctx *gin.Context) {
 
 		// Get username
 		session := sessions.Default(ctx)
-		username := session.Get("username")
+		username := session.Get("username").(string)
 
 		// Get Query Parameters
 		title, _ := ctx.GetQuery("title")
@@ -95,6 +95,11 @@ func PostList(ctx *gin.Context) {
 }
 
 func List(ctx *gin.Context, tasks []database.Task) {
+	ftasks, err := formatTasksWithOption(tasks, ctx)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
+	}
 	ctx.HTML(http.StatusOK, "task_list.html", gin.H{ "Title" : "TASK LIST",
-																									 "Tasks" : formatTasksWithOption(tasks, ctx) })
+																									 "Tasks" : ftasks })
 }

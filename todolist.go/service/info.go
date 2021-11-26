@@ -36,7 +36,7 @@ func PostInfo(ctx *gin.Context) {
 
 		// check if oldname is correct
 		session := sessions.Default(ctx)
-		username := session.Get("username")
+		username := session.Get("username").(string)
 		if username != oldname {
 			ctx.String(http.StatusBadRequest, err.Error())
 			return
@@ -129,7 +129,7 @@ func PostInfo(ctx *gin.Context) {
 
 func Info(ctx *gin.Context, message string) {
 	session := sessions.Default(ctx)
-	username := session.Get("username")
+	username := session.Get("username").(string)
 	ctx.HTML(http.StatusOK, "info.html", gin.H{ "Title"    : "USER INFO",
 																						  "Username" : username,
 																					    "Message"  : message })

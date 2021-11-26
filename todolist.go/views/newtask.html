@@ -6,10 +6,16 @@
     <!-- input -->
     <label for="title" class="w3-text-teal">タイトル</label>
     <input type="text" name="title" class="w3-input w3-border w3-light-grey"><br>
+
     <label for="deadline" class="w3-text-teal">締切</label><br>
     <input type="datetime-local" name="deadline" class="w3-input w3-border w3-light-grey" max="2030-12-31T23:59:59" min="2021-11-01T00:00:00"><br>
+
+    <label for="share" class="w3-text-teal">共有するユーザー</label>
+    <input type="text" name="share" class="w3-input w3-border w3-light-grey" placeholder="User1,ユーザー2"><br>
+
     <label for="detail" class="w3-text-teal">詳細</label><br>
     <textarea name="detail" form="newtask" rows="4" cols="50" class="w3-input w3-border w3-light-grey"></textarea><br>
+
     <!-- buttons -->
     <input type="submit" value="register" name="submit" class="w3-btn w3-teal">
     <!-- message -->
