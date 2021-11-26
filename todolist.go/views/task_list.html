@@ -4,15 +4,17 @@
 <!-- contents-->
 <table class="w3-table w3-striped w3-border w3-centered">
     <tr class="w3-teal">
-        <th width="30%">タイトル</th>
-        <th width="30%">登録日</th>
-        <th width="10%">状態</th>
-        <th width="30%">選択<th>
+        <th width="25%">タイトル</th>
+        <th width="22%">登録日</th>
+        <th width="22%">締切</th>
+        <th width="11%">状態</th>
+        <th width="20%">選択<th>
     </tr>
     {{ if .Tasks }}{{ range $task := .Tasks }}
     <tr>
         <td align="center" class="w3-text-teal"><a href="/task/{{ $task.ID }}">{{ $task.Title }}</a></td>
         <td align="center" class="w3-text-teal">{{ $task.CreatedAt }}</td>
+        <td align="center" class="w3-text-teal">{{ if $task.HasDeadline }}{{ $task.Deadline }}{{ else }}-{{ end }}</td>
         <td align="center" class="w3-text-teal">{{ if $task.IsDone }}済{{ else }}{{ end }}</td>
         <td align="center" class="w3-text-teal"><input type="checkbox" name="check[]" value={{ $task.ID }} id={{ $task.ID}} form="form"><td>
     </tr>

@@ -7,10 +7,13 @@
     <label for="title" class="w3-text-teal">タイトル</label>
     <input type="text" name="title" value={{ .Task.Title }} class="w3-input w3-border w3-light-grey"><br>
 
-    <label for="title" class="w3-text-teal">登録日</label>
-    <input type="text" name="title" value={{ .Task.CreatedAt }} readonly class="w3-input w3-border w3-light-grey"><br>
+    <label for="register_time" class="w3-text-teal">登録日</label>
+    <input type="datetime-local" name="resister_time" class="w3-input w3-border w3-light-grey" value={{ .Task.CreatedAt_html}} readonly><br>
 
-    <label for="title" class="w3-text-teal">状態</label><br>
+    <label for="deadline" class="w3-text-teal">締切</label><br>
+    <input type="datetime-local" name="deadline" class="w3-input w3-border w3-light-grey" max="2030-12-31T23:59:59" min="2021-11-01T00:00:00" value={{ .Task.Deadline_html}}><br>
+
+    <label for="isdone" class="w3-text-teal">状態</label><br>
     <input type="radio" form="update" id="done" name="isdone" value="done" {{ if .Task.IsDone }}checked{{ end }}>
     <label for="done">完了</label>
     <input type="radio" form="update" id="undone" name="isdone" value="undone" {{ if not .Task.IsDone }}checked{{ end }}>

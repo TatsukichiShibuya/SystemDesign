@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -11,7 +10,6 @@ import (
 	database "todolist.go/db"
 )
 
-// Task renders a task with given ID
 func GetTask(ctx *gin.Context) {
 	if sessionCheck(ctx) {
 		// Get DB connection
@@ -78,33 +76,45 @@ func PostTask(ctx *gin.Context) {
 			return
 		}
 
+
 		submit, _ := ctx.GetPostForm("submit")
 		message := ""
-		if (submit == "update") {
+
+		if submit == "update" {
 			// get parameters
 			title, _ := ctx.GetPostForm("title")
 			isdone, _ := ctx.GetPostForm("isdone")
+			deadline_string, _ := ctx.GetPostForm("deadline")
 			detail, _ := ctx.GetPostForm("detail")
 
 			if title == "" {
-				message += "タイトルを入力してください"
+				message = "タイトルを入力してください"
 			} else {
+				// parse deadline
+				deadline := parseDeadline(deadline_string)
+
 				// update infomations with parameters
-				data := map[string]interface{}{ "id": id, "title": title, "detail": detail }
-				if isdone == "done" {
-					_, err = db.NamedExec("UPDATE tasks SET title=:title, is_done=b'1', detail=:detail WHERE id=:id", data)
-				} else if isdone == "undone" {
-					_, err = db.NamedExec("UPDATE tasks SET title=:title, is_done=b'0', detail=:detail WHERE id=:id", data)
+				data := map[string]interface{}{ "id": id, "title": title, "deadline": deadline, "detail": detail }
+				if deadline.IsZero() {
+					if isdone == "done" {
+						_, err = db.NamedExec("UPDATE tasks SET title=:title, is_done=b'1', detail=:detail WHERE id=:id", data)
+					} else if isdone == "undone" {
+						_, err = db.NamedExec("UPDATE tasks SET title=:title, is_done=b'0', detail=:detail WHERE id=:id", data)
+					}
+				} else {
+					if isdone == "done" {
+						_, err = db.NamedExec("UPDATE tasks SET title=:title, is_done=b'1', deadline=:deadline, detail=:detail WHERE id=:id", data)
+					} else if isdone == "undone" {
+						_, err = db.NamedExec("UPDATE tasks SET title=:title, is_done=b'0', deadline=:deadline, detail=:detail WHERE id=:id", data)
+					}
 				}
+
 				if err != nil {
 					ctx.String(http.StatusInternalServerError, err.Error())
 					return
 				}
 				message += "タスクを更新しました"
 			}
-		} else {
-			fmt.Println("err")
-			return
 		}
 
 		// Get a task with given ID
@@ -122,5 +132,7 @@ func PostTask(ctx *gin.Context) {
 }
 
 func Task(ctx *gin.Context, task database.Task, message string) {
-	ctx.HTML(http.StatusOK, "task.html", gin.H{"Title": "TASK", "Task": task, "Message": message})
+	ctx.HTML(http.StatusOK, "task.html", gin.H{ "Title"   : "TASK",
+																						  "Task"    : formatTask(task),
+																						  "Message" : message })
 }

@@ -10,7 +10,6 @@ import (
 	database "todolist.go/db"
 )
 
-// TaskList renders list of tasks in DB
 func GetList(ctx *gin.Context) {
 	if sessionCheck(ctx) {
 		// Get DB connection
@@ -34,10 +33,6 @@ func GetList(ctx *gin.Context) {
 			query += " AND is_done=b'1'"
 		} else if isdone == "undone" {
 			query += " AND is_done=b'0'"
-		} else if isdone == "both" {
-			// nothing to do
-		} else {
-			// regard as "both"
 		}
 
 		// Get tasks in DB
@@ -75,17 +70,22 @@ func PostList(ctx *gin.Context) {
 			for i:=0; i<len(checkbox.CheckIDs); i++ {
 				id := checkbox.CheckIDs[i]
 				data := map[string]interface{}{ "id": id }
-				_, _ = db.NamedExec("UPDATE tasks SET is_done=b'1' WHERE id=:id", data)
+				_, err = db.NamedExec("UPDATE tasks SET is_done=b'1' WHERE id=:id", data)
+				if err != nil {
+					ctx.String(http.StatusInternalServerError, err.Error())
+					return
+				}
 			}
 		} else if submit == "delete" {
 			for i:=0; i<len(checkbox.CheckIDs); i++ {
 				id := checkbox.CheckIDs[i]
 				data := map[string]interface{}{ "taskid": id }
-				_, _ = db.NamedExec("DELETE FROM owners WHERE taskid=:taskid", data)
+				_, err = db.NamedExec("DELETE FROM owners WHERE taskid=:taskid", data)
+				if err != nil {
+					ctx.String(http.StatusInternalServerError, err.Error())
+					return
+				}
 			}
-		} else {
-			fmt.Println("err")
-			return
 		}
 
 		GetList(ctx)
@@ -95,5 +95,6 @@ func PostList(ctx *gin.Context) {
 }
 
 func List(ctx *gin.Context, tasks []database.Task) {
-	ctx.HTML(http.StatusOK, "task_list.html", gin.H{"Title": "TASK LIST", "Tasks": tasks})
+	ctx.HTML(http.StatusOK, "task_list.html", gin.H{ "Title" : "TASK LIST",
+																									 "Tasks" : formatTasks(tasks) })
 }
