@@ -71,6 +71,7 @@ type FormatedTask struct {
 	Deadline       string
 	Deadline_html  string
 	HasDeadline    bool
+	Importance     int
 	Limit				   string
 	IsShared       bool
 	SharedUsers    string
@@ -93,6 +94,12 @@ func formatTask(task database.Task, ctx *gin.Context, db *sqlx.DB, username stri
 		ftask.HasDeadline = false
 	}
 	ftask.Limit = culcLimit(task.Deadline)
+	ftask.IsDone = task.IsDone
+	if ftask.HasDeadline && !ftask.IsDone {
+		ftask.Importance = culcImportance(task.Deadline)
+	} else {
+		ftask.Importance = 0
+	}
 
 	var owners []database.Owner
 	err := db.Select(&owners, "SELECT * FROM owners WHERE taskid=?", task.ID)
@@ -110,7 +117,7 @@ func formatTask(task database.Task, ctx *gin.Context, db *sqlx.DB, username stri
 		}
 	}
 
-	ftask.IsDone = task.IsDone
+
 	ftask.Detail = task.Detail
 
 	return ftask, nil
@@ -244,5 +251,36 @@ func culcLimit(deadline time.Time) string {
 		return res + "前"
 	} else {
 		return res
+	}
+}
+
+
+func culcImportance(deadline time.Time) int {
+	sub := int(deadline.Sub(time.Now()).Seconds())
+	negative := (sub<0)
+	if negative {
+		sub *= -1
+	}
+
+	seconds := sub%60
+	sub -= seconds
+
+	sub /= 60
+	minutes := sub%60
+	sub -= minutes
+
+	sub /= 60
+	hours := sub%24
+	sub -= hours
+
+	sub /= 24
+	days := sub
+
+	if negative {
+		return 3
+	} else if days == 0 {
+		return 2
+	} else {
+		return 1
 	}
 }
