@@ -96,5 +96,5 @@ func PostList(ctx *gin.Context) {
 
 func List(ctx *gin.Context, tasks []database.Task) {
 	ctx.HTML(http.StatusOK, "task_list.html", gin.H{ "Title" : "TASK LIST",
-																									 "Tasks" : formatTasks(tasks) })
+																									 "Tasks" : formatTasksWithOption(tasks, ctx) })
 }

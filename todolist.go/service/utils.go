@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	s "sort"
 	"time"
 	"crypto/sha256"
 
@@ -48,7 +49,7 @@ func formatTask(task database.Task) FormatedTask {
 	} else {
 		ftask.HasDeadline = false
 	}
-	ftask.Limit = "-"
+	ftask.Limit = culcLimit(task.Deadline)
 	ftask.IsDone = task.IsDone
 	ftask.Detail = task.Detail
 
@@ -65,8 +66,95 @@ func formatTasks(tasks []database.Task) []FormatedTask {
 	return ftasks
 }
 
+func formatTasksWithOption(tasks []database.Task, ctx *gin.Context) []FormatedTask {
+	var ftasksWO []FormatedTask
+
+	deadline, _ := ctx.GetQuery("deadline")
+	sort, _ := ctx.GetQuery("sort")
+
+	ftasks := formatTasks(tasks)
+	if deadline == "yes" {
+		for i:=0; i<len(ftasks); i++ {
+			if ftasks[i].HasDeadline {
+				ftasksWO = append(ftasksWO, ftasks[i])
+			}
+		}
+	} else if deadline == "no" {
+		for i:=0; i<len(ftasks); i++ {
+			if !ftasks[i].HasDeadline {
+				ftasksWO = append(ftasksWO, ftasks[i])
+			}
+		}
+	} else {
+		for i:=0; i<len(ftasks); i++ {
+			ftasksWO = append(ftasksWO, ftasks[i])
+		}
+	}
+
+	if sort == "reg_early" {
+		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].CreatedAt < ftasksWO[j].CreatedAt })
+	} else if sort == "reg_late" {
+		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].CreatedAt > ftasksWO[j].CreatedAt })
+	} else if sort == "dead_early" {
+		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].Deadline < ftasksWO[j].Deadline })
+	} else if sort == "dead_late" {
+		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].Deadline > ftasksWO[j].Deadline })
+	}
+
+	return ftasksWO
+}
+
 func parseDeadline(deadline string) time.Time {
 	jst, _ := time.LoadLocation("Asia/Tokyo")
 	t, _ := time.ParseInLocation("2006-01-02T15:04", deadline, jst)
 	return t
+}
+
+func culcLimit(deadline time.Time) string {
+	sub := int(deadline.Sub(time.Now()).Seconds())
+	negative := (sub<0)
+	if negative {
+		sub *= -1
+	}
+
+	seconds := sub%60
+	sub -= seconds
+
+	sub /= 60
+	minutes := sub%60
+	sub -= minutes
+
+	sub /= 60
+	hours := sub%24
+	sub -= hours
+
+	sub /= 24
+	days := sub
+
+	var res string
+	if days >= 365 {
+		res = fmt.Sprintf("%d年以上", int(days/365))
+	} else if days >= 10 {
+		res = fmt.Sprintf("%d日", days)
+	} else {
+		if days > 1 {
+			res = fmt.Sprintf("%d日", days)
+			if hours > 0 {
+				res += fmt.Sprintf("%d時間", hours)
+			}
+		} else {
+			if hours > 0 {
+				res = fmt.Sprintf("%d時間", hours)
+				res += fmt.Sprintf("%d分", minutes)
+			} else {
+				res = fmt.Sprintf("%d分", minutes)
+			}
+		}
+	}
+
+	if negative {
+		return res + "前"
+	} else {
+		return res
+	}
 }

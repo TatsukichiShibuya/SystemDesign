@@ -5,17 +5,19 @@
 <table class="w3-table w3-striped w3-border w3-centered">
     <tr class="w3-teal">
         <th width="25%">タイトル</th>
-        <th width="22%">登録日</th>
-        <th width="22%">締切</th>
-        <th width="11%">状態</th>
-        <th width="20%">選択<th>
+        <th width="20%">登録日</th>
+        <th width="20%">締切</th>
+        <th width="15%">残り時間</th>
+        <th width="10%">状態</th>
+        <th width="10%">選択<th>
     </tr>
     {{ if .Tasks }}{{ range $task := .Tasks }}
     <tr>
         <td align="center" class="w3-text-teal"><a href="/task/{{ $task.ID }}">{{ $task.Title }}</a></td>
         <td align="center" class="w3-text-teal">{{ $task.CreatedAt }}</td>
         <td align="center" class="w3-text-teal">{{ if $task.HasDeadline }}{{ $task.Deadline }}{{ else }}-{{ end }}</td>
-        <td align="center" class="w3-text-teal">{{ if $task.IsDone }}済{{ else }}{{ end }}</td>
+        <td align="center" class="w3-text-teal">{{ if $task.HasDeadline }}{{ $task.Limit }}{{ else }}-{{ end }}</td>
+        <td align="center" class="w3-text-teal">{{ if $task.IsDone }}完了{{ else }}{{ end }}</td>
         <td align="center" class="w3-text-teal"><input type="checkbox" name="check[]" value={{ $task.ID }} id={{ $task.ID}} form="form"><td>
     </tr>
     {{ end }}{{ end }}
@@ -40,14 +42,46 @@
         <label for="title" class="w3-text-blue-grey">タイトルに以下を含む</label>
         <input type="search" name="title" class="w3-input w3-border w3-light-grey"><br>
       </div>
-      <div class="w3-half">
-        <label for="isdone" class="w3-text-blue-grey">状態</label><br>
-        <input type="radio" id="done" name="isdone" value="done">
-        <label for="done" class="w3-text-blue-grey">完了のみ</label><br>
-        <input type="radio" id="undone" name="isdone" value="undone">
-        <label for="undone" class="w3-text-blue-grey">未完了のみ</label><br>
-        <input type="radio" id="both" name="isdone" value="both">
-        <label for="both" class="w3-text-blue-grey">両方</label><br><br>
+      <div class="w3-row-padding w3-half">
+        <div class="w3-third">
+          <label for="isdone" class="w3-text-blue-grey">状態</label><br>
+
+          <input type="radio" id="done" name="isdone" value="done">
+          <label for="done" class="w3-text-blue-grey">完了のみ</label><br>
+
+          <input type="radio" id="undone" name="isdone" value="undone">
+          <label for="undone" class="w3-text-blue-grey">未完了のみ</label><br>
+
+          <input type="radio" id="both" name="isdone" value="both">
+          <label for="both" class="w3-text-blue-grey">両方</label><br><br>
+        </div>
+        <div class="w3-third">
+          <label for="deadline" class="w3-text-blue-grey">締切</label><br>
+
+          <input type="radio" id="yes" name="deadline" value="yes">
+          <label for="yes" class="w3-text-blue-grey">締切ありのみ</label><br>
+
+          <input type="radio" id="no" name="deadline" value="no">
+          <label for="no" class="w3-text-blue-grey">締切なしのみ</label><br>
+
+          <input type="radio" id="both2" name="deadline" value="both2">
+          <label for="both2" class="w3-text-blue-grey">両方</label><br><br>
+        </div>
+        <div class="w3-third">
+          <label for="sort" class="w3-text-blue-grey">ソート</label><br>
+
+          <input type="radio" id="reg_early" name="sort" value="reg_early">
+          <label for="reg_early" class="w3-text-blue-grey">登録日の早い順</label><br>
+
+          <input type="radio" id="reg_late" name="sort" value="reg_late">
+          <label for="reg_late" class="w3-text-blue-grey">登録日の遅い順</label><br>
+
+          <input type="radio" id="dead_early" name="sort" value="dead_early">
+          <label for="dead_early" class="w3-text-blue-grey">締切の早い順</label><br>
+
+          <input type="radio" id="dead_late" name="sort" value="dead_late">
+          <label for="dead_late" class="w3-text-blue-grey">締切の遅い順</label><br>
+        </div>
       </div>
     </div><br>
     <div class="w3-display-container">
