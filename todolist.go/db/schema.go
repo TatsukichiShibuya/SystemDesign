@@ -24,7 +24,7 @@ type User struct {
 
 // User corresponds to a row in `owners` table
 type Owner struct {
-	ID       uint64 `db:"id"`
-	Username string `db:"username"`
-	TaskID   uint64 `db:"taskid"`
+	ID     uint64 `db:"id"`
+	UserID uint64 `db:"userid"`
+	TaskID uint64 `db:"taskid"`
 }

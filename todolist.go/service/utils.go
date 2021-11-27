@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	s "sort"
 	"time"
 	"strings"
 	"unicode"
@@ -17,7 +16,7 @@ import (
 
 func sessionCheck(ctx *gin.Context) bool {
   session := sessions.Default(ctx)
-  return session.Get("username") != nil
+  return session.Get("userid") != nil
 }
 
 func hash(passward string) string {
@@ -25,9 +24,9 @@ func hash(passward string) string {
 	return fmt.Sprintf("%x", h)
 }
 
-func checkname(username string) bool {
+func isAcceptableString(str string) bool {
 	res := true
-	for _, c := range username {
+	for _, c := range str {
 		ok := false
 		ok = ok || unicode.In(c, unicode.Hiragana)
 		ok = ok || unicode.In(c, unicode.Katakana)
@@ -39,6 +38,12 @@ func checkname(username string) bool {
 	return res
 }
 
+func isOwnerOfTask(userid uint64, taskid uint64, db *sqlx.DB) bool {
+	var temp database.Owner
+	err := db.Get(&temp, "SELECT * FROM owners WHERE userid=? AND taskid=?", userid, taskid)
+	return err == nil
+}
+
 func parseUsers(users string) []string {
 	var res []string
 	if users == "" {
@@ -48,10 +53,16 @@ func parseUsers(users string) []string {
 	}
 }
 
-func allExist(users []string, db *sqlx.DB) bool {
+func parseDeadline(deadline string) time.Time {
+	jst, _ := time.LoadLocation("Asia/Tokyo")
+	t, _ := time.ParseInLocation("2006-01-02T15:04", deadline, jst)
+	return t
+}
+
+func allUsersExist(users []string, db *sqlx.DB) bool {
 	var user database.User
 	for _, username := range users {
-		if checkname(username) {
+		if isAcceptableString(username) {
 			err := db.Get(&user, "SELECT * FROM users WHERE username=?", username)
 			if err != nil {
 				return false
@@ -63,169 +74,8 @@ func allExist(users []string, db *sqlx.DB) bool {
 	return true
 }
 
-type FormatedTask struct {
-	ID             uint64
-	Title          string
-	CreatedAt      string
-	CreatedAt_html string
-	Deadline       string
-	Deadline_html  string
-	HasDeadline    bool
-	Importance     int
-	Limit				   string
-	IsShared       bool
-	SharedUsers    string
-	IsDone         bool
-	Detail         string
-}
-
-func formatTask(task database.Task, ctx *gin.Context, db *sqlx.DB, username string) (FormatedTask, error) {
-	var ftask FormatedTask
-
-	ftask.ID = task.ID
-	ftask.Title = task.Title
-	ftask.CreatedAt = task.CreatedAt.Format("2006/01/02 15:04")
-	ftask.CreatedAt_html = task.CreatedAt.Format("2006-01-02T15:04")
-	ftask.Deadline = task.Deadline.Format("2006/01/02 15:04")
-	ftask.Deadline_html = task.Deadline.Format("2006-01-02T15:04")
-	if task.Deadline.After(task.CreatedAt) {
-		ftask.HasDeadline = true
-	} else {
-		ftask.HasDeadline = false
-	}
-	ftask.Limit = culcLimit(task.Deadline)
-	ftask.IsDone = task.IsDone
-	if ftask.HasDeadline && !ftask.IsDone {
-		ftask.Importance = culcImportance(task.Deadline)
-	} else {
-		ftask.Importance = 0
-	}
-
-	var owners []database.Owner
-	err := db.Select(&owners, "SELECT * FROM owners WHERE taskid=?", task.ID)
-	if err != nil {
-		return ftask, err
-	}
-	ftask.IsShared = (len(owners)>1)
-	ftask.SharedUsers = ""
-	for _, owner := range owners {
-		if owner.Username != username {
-			if ftask.SharedUsers != "" {
-				ftask.SharedUsers += ","
-			}
-			ftask.SharedUsers += owner.Username
-		}
-	}
-
-
-	ftask.Detail = task.Detail
-
-	return ftask, nil
-}
-
-func formatTasks(tasks []database.Task, ctx *gin.Context) ([]FormatedTask, error) {
-	ftasks := make([]FormatedTask, len(tasks))
-
-	// Get DB connection
-	db, err := database.GetConnection()
-	if err != nil {
-		return ftasks, err
-	}
-
-	session := sessions.Default(ctx)
-	username := session.Get("username").(string)
-
-	for i:=0; i<len(tasks); i++ {
-		ftasks[i], err = formatTask(tasks[i], ctx, db, username)
-		if err != nil {
-			return ftasks, err
-		}
-	}
-
-	return ftasks, nil
-}
-
-func formatTasksWithOption(tasks []database.Task, ctx *gin.Context) ([]FormatedTask, error) {
-	var ftasksWO []FormatedTask
-
-	deadline, _ := ctx.GetQuery("deadline")
-	sort, _ := ctx.GetQuery("sort")
-
-	ftasks, err := formatTasks(tasks, ctx)
-	if err != nil {
-		return ftasksWO, err
-	}
-
-	if deadline == "yes" {
-		for i:=0; i<len(ftasks); i++ {
-			if ftasks[i].HasDeadline {
-				ftasksWO = append(ftasksWO, ftasks[i])
-			}
-		}
-	} else if deadline == "no" {
-		for i:=0; i<len(ftasks); i++ {
-			if !ftasks[i].HasDeadline {
-				ftasksWO = append(ftasksWO, ftasks[i])
-			}
-		}
-	} else {
-		for i:=0; i<len(ftasks); i++ {
-			ftasksWO = append(ftasksWO, ftasks[i])
-		}
-	}
-
-	if sort == "reg_early" {
-		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].CreatedAt < ftasksWO[j].CreatedAt })
-	} else if sort == "reg_late" {
-		s.SliceStable(ftasksWO, func(i, j int) bool { return ftasksWO[i].CreatedAt > ftasksWO[j].CreatedAt })
-	} else if sort == "dead_early" {
-		s.SliceStable(ftasksWO, func(i, j int) bool {
-			if (ftasksWO[i].HasDeadline&&ftasksWO[j].HasDeadline) || (!ftasksWO[i].HasDeadline&&!ftasksWO[j].HasDeadline){
-				return ftasksWO[i].Deadline < ftasksWO[j].Deadline
-			} else {
-				return ftasksWO[i].HasDeadline
-			}
-		})
-	} else if sort == "dead_late" {
-		s.SliceStable(ftasksWO, func(i, j int) bool {
-			if (ftasksWO[i].HasDeadline&&ftasksWO[j].HasDeadline) || (!ftasksWO[i].HasDeadline&&!ftasksWO[j].HasDeadline){
-				return ftasksWO[i].Deadline > ftasksWO[j].Deadline
-			} else {
-				return ftasksWO[i].HasDeadline
-			}
-		})
-	}
-
-	return ftasksWO, nil
-}
-
-func parseDeadline(deadline string) time.Time {
-	jst, _ := time.LoadLocation("Asia/Tokyo")
-	t, _ := time.ParseInLocation("2006-01-02T15:04", deadline, jst)
-	return t
-}
-
 func culcLimit(deadline time.Time) string {
-	sub := int(deadline.Sub(time.Now()).Seconds())
-	negative := (sub<0)
-	if negative {
-		sub *= -1
-	}
-
-	seconds := sub%60
-	sub -= seconds
-
-	sub /= 60
-	minutes := sub%60
-	sub -= minutes
-
-	sub /= 60
-	hours := sub%24
-	sub -= hours
-
-	sub /= 24
-	days := sub
-
+	negative, days, hours, minutes, _ := parseTime(deadline)
 	var res string
 	if days >= 365 {
 		res = fmt.Sprintf("%d年以上", int(days/365))
@@ -246,17 +96,25 @@ func culcLimit(deadline time.Time) string {
 			}
 		}
 	}
-
 	if negative {
-		return res + "前"
+		res += "前"
+	}
+	return res
+}
+
+func culcImportance(deadline time.Time) int {
+	negative, days, _, _, _ := parseTime(deadline)
+	if negative {
+		return 3
+	} else if days == 0 {
+		return 2
 	} else {
-		return res
+		return 1
 	}
 }
 
-
-func culcImportance(deadline time.Time) int {
-	sub := int(deadline.Sub(time.Now()).Seconds())
+func parseTime(t time.Time) (bool, int, int, int, int) {
+	sub := int(t.Sub(time.Now()).Seconds())
 	negative := (sub<0)
 	if negative {
 		sub *= -1
@@ -276,11 +134,5 @@ func culcImportance(deadline time.Time) int {
 	sub /= 24
 	days := sub
 
-	if negative {
-		return 3
-	} else if days == 0 {
-		return 2
-	} else {
-		return 1
-	}
+	return negative, days, hours, minutes, seconds
 }

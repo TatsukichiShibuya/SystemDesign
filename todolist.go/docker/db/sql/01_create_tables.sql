@@ -22,7 +22,7 @@ CREATE TABLE `users` (
 
 CREATE TABLE `owners` (
     `id` bigint(20) NOT NULL AUTO_INCREMENT,
-    `username` varchar(20) NOT NULL,
+    `userid` bigint(20) NOT NULL,
     `taskid` bigint(20) NOT NULL,
     PRIMARY KEY (`id`)
 ) DEFAULT CHARSET=utf8mb4;

@@ -10,127 +10,129 @@ import (
 )
 
 func GetInfo(ctx *gin.Context) {
-	if sessionCheck(ctx) {
-		Info(ctx, "")
-	} else {
+	// check if the user is logged in
+	if !sessionCheck(ctx) {
 		ctx.Redirect(http.StatusSeeOther, "/login")
+		return
 	}
+
+	Info(ctx, "")
 }
 
 func PostInfo(ctx *gin.Context) {
-	if sessionCheck(ctx) {
-		// Get DB connection
-		db, err := database.GetConnection()
-		if err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// get inputs
-		submit, _ := ctx.GetPostForm("submit")
-		oldname, _ := ctx.GetPostForm("oldname")
-		newname, _ := ctx.GetPostForm("newname")
-		oldpass, _ := ctx.GetPostForm("oldpass")
-		newpass, _ := ctx.GetPostForm("newpass")
-		message := ""
-
-		// check if oldname is correct
-		session := sessions.Default(ctx)
-		username := session.Get("username").(string)
-		if username != oldname {
-			ctx.String(http.StatusBadRequest, err.Error())
-			return
-		}
-
-		// get user info
-		var user database.User
-		err = db.Get(&user, "SELECT * FROM users WHERE username=?", username)
-		if err != nil {
-			ctx.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// check passward
-		if user.Passward == hash(oldpass) {
-			if submit == "delete" {
-				// delete user
-				data := map[string]interface{}{ "username": username }
-				_, err = db.NamedExec("DELETE FROM users WHERE username=:username", data)
-				if err != nil {
-					ctx.String(http.StatusInternalServerError, err.Error())
-					return
-				}
-
-				// delete owner
-				_, err = db.NamedExec("DELETE FROM owners WHERE username=:username", data)
-				if err != nil {
-					ctx.String(http.StatusInternalServerError, err.Error())
-					return
-				}
-
-				// logout
-			  session.Delete("username")
-			  session.Save()
-				ctx.Redirect(http.StatusSeeOther, "/login")
-				return
-			} else if submit == "update" {
-				// check if new info is not blank
-				if newname == "" && newpass == "" {
-					message = "更新情報を入力してください"
-				} else {
-					// update passward
-					if newpass != "" {
-						data := map[string]interface{}{ "username": username, "newpass": hash(newpass) }
-						_, _ = db.NamedExec("UPDATE users SET passward=:newpass WHERE username=:username", data)
-						message = "パスワードを変更しました"
-					}
-
-					// update username
-					if newname != "" {
-						// check if username is not used
-						err = db.Get(&user, "SELECT * FROM users WHERE username=?", newname)
-						if err != nil {
-							// change username
-							data := map[string]interface{}{ "oldname": oldname, "newname": newname }
-							_, err = db.NamedExec("UPDATE users SET username=:newname WHERE username=:oldname", data)
-							if err != nil {
-								ctx.String(http.StatusInternalServerError, err.Error())
-								return
-							}
-							session.Set("username", newname)
-							session.Save()
-
-							// update owners
-							_, err = db.NamedExec("UPDATE owners SET username=:newname WHERE username=:oldname", data)
-							if err != nil {
-								ctx.String(http.StatusInternalServerError, err.Error())
-								return
-							}
-							if message != "" {
-								message = "ユーザー名とパスワードを変更しました"
-							} else {
-								message = "ユーザー名を変更しました"
-							}
-						} else {
-							message = "指定されたユーザー名はすでに使用されています"
-						}
-					}
-				}
-			}
-		} else {
-			message = "パスワードが間違っています"
-		}
-
-		Info(ctx, message)
-	} else {
+	// check if the user is logged in
+	if !sessionCheck(ctx) {
 		ctx.Redirect(http.StatusSeeOther, "/login")
+		return
 	}
+
+	// Get DB connection
+	db, err := database.GetConnection()
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	session := sessions.Default(ctx)
+	userid := session.Get("userid").(uint64)
+
+	// get inputs
+	submit, _ := ctx.GetPostForm("submit")
+	newname, _ := ctx.GetPostForm("newname")
+	oldpass, _ := ctx.GetPostForm("oldpass")
+	newpass, _ := ctx.GetPostForm("newpass")
+	message := ""
+
+	// get user info
+	var user database.User
+	err = db.Get(&user, "SELECT * FROM users WHERE id=?", userid)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// check passward
+	if user.Passward != hash(oldpass) {
+		Info(ctx, "パスワードが間違っています")
+		return
+	}
+
+	if submit == "delete" {
+		// delete user
+		data := map[string]interface{}{ "userid": userid }
+		_, err = db.NamedExec("DELETE FROM users WHERE id=:userid", data)
+		if err != nil {
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// delete owner
+		_, err = db.NamedExec("DELETE FROM owners WHERE userid=:userid", data)
+		if err != nil {
+			ctx.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// logout
+		ctx.Redirect(http.StatusSeeOther, "/logout")
+		return
+	} else if submit == "update" {
+		// no info to update
+		if newname == "" && newpass == "" {
+			Info(ctx, "更新情報を入力してください")
+			return
+		}
+
+		// update passward if needed
+		if newpass != "" {
+			data := map[string]interface{}{ "userid": userid, "newpass": hash(newpass) }
+			_, err = db.NamedExec("UPDATE users SET passward=:newpass WHERE id=:userid", data)
+			if err != nil {
+				ctx.String(http.StatusInternalServerError, err.Error())
+				return
+			}
+			message = "パスワードを変更しました"
+		}
+
+		// update username if needed
+		if newname != "" {
+			// check if username is acceptable
+			if !isAcceptableString(newname) {
+				Info(ctx, "ユーザー名には（アルファベット，数字，ひらがな，カタカナ，漢字）のみ使えます")
+				return
+			}
+
+			// check if username is not used
+			var temp database.User
+			err = db.Get(&temp, "SELECT * FROM users WHERE username=?", newname)
+			if err == nil {
+				Info(ctx, "指定されたユーザー名はすでに使用されています")
+				return
+			}
+
+			// change username
+			data := map[string]interface{}{ "userid": userid, "newname": newname }
+			_, err = db.NamedExec("UPDATE users SET username=:newname WHERE id=:userid", data)
+			if err != nil {
+				ctx.String(http.StatusInternalServerError, err.Error())
+				return
+			}
+			session.Set("username", newname)
+			session.Save()
+			if message != "" {
+				message = "ユーザー名とパスワードを変更しました"
+			} else {
+				message = "ユーザー名を変更しました"
+			}
+		}
+	}
+	Info(ctx, message)
 }
 
 func Info(ctx *gin.Context, message string) {
 	session := sessions.Default(ctx)
 	username := session.Get("username").(string)
-	ctx.HTML(http.StatusOK, "info.html", gin.H{ "Title"    : "USER INFO",
-																						  "Username" : username,
-																					    "Message"  : message })
+	ctx.HTML(http.StatusOK, "info.html", gin.H{ "Title"   : "USER INFO",
+																							"Username": username,
+																							"Message" : message })
 }

@@ -2,7 +2,7 @@ package service
 
 import (
 	"net/http"
-	
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/sessions"
 )
@@ -10,6 +10,7 @@ import (
 func GetLogout(ctx *gin.Context) {
 	if sessionCheck(ctx) {
 	  session := sessions.Default(ctx)
+		session.Delete("userid")
 	  session.Delete("username")
 	  session.Save()
 	}

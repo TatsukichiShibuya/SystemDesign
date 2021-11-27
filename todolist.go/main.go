@@ -38,7 +38,7 @@ func main() {
 	engine.Static("/assets", "./assets")
 
 	engine.GET("/", service.GetHome)
-	engine.POST("/", service.PostHome)
+	engine.POST("/", service.GetHome)
 
 	engine.GET("/login", service.GetLogin)
 	engine.POST("/login", service.PostLogin)
