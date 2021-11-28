@@ -117,8 +117,6 @@ func PostInfo(ctx *gin.Context) {
 				ctx.String(http.StatusInternalServerError, err.Error())
 				return
 			}
-			session.Set("username", newname)
-			session.Save()
 			if message != "" {
 				message = "ユーザー名とパスワードを変更しました"
 			} else {
@@ -130,9 +128,22 @@ func PostInfo(ctx *gin.Context) {
 }
 
 func Info(ctx *gin.Context, message string) {
+	// Get DB connection
+	db, err := database.GetConnection()
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
+	}
 	session := sessions.Default(ctx)
-	username := session.Get("username").(string)
+	userid := session.Get("userid").(uint64)
+	var user database.User
+	err = db.Get(&user, "SELECT * FROM users WHERE id=?", userid)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	ctx.HTML(http.StatusOK, "info.html", gin.H{ "Title"   : "USER INFO",
-																							"Username": username,
+																							"Username": user.Username,
 																							"Message" : message })
 }

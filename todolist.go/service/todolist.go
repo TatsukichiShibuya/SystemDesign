@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"strconv"
 	"net/http"
 
@@ -31,20 +30,26 @@ func GetList(ctx *gin.Context) {
 	// get inputs
 	title, _ := ctx.GetQuery("title")
 	isdone, _ := ctx.GetQuery("isdone")
+	deadline, _ := ctx.GetQuery("deadline")
 	// other options (deadline and sort) are processed
 	// using formatTasksWithOption in List
 
-	query := "SELECT * FROM tasks WHERE id in (SELECT taskid FROM owners WHERE userid=?)"
-	query += fmt.Sprintf(" AND title LIKE '%%%s%%'", title)
+	query := "SELECT * FROM tasks WHERE id in (SELECT taskid FROM owners WHERE userid=?) AND title LIKE ?"
 	if isdone == "done" {
 		query += " AND is_done=b'1'"
 	} else if isdone == "undone" {
 		query += " AND is_done=b'0'"
 	}
+	if deadline == "yes" {
+		query += " AND deadline > created_at"
+	} else if deadline == "no" {
+		query += " AND deadline <= created_at"
+	}
 
 	// Get tasks from DB
 	var tasks []database.Task
-	err = db.Select(&tasks, query, userid)
+	args := []interface{}{ userid, "%"+title+"%" }
+	err = db.Select(&tasks, query, args...)
 	if err != nil {
 		ctx.String(http.StatusInternalServerError, err.Error())
 		return

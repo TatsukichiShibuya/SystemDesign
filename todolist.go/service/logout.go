@@ -9,10 +9,9 @@ import (
 
 func GetLogout(ctx *gin.Context) {
 	if sessionCheck(ctx) {
-	  session := sessions.Default(ctx)
+		session := sessions.Default(ctx)
 		session.Delete("userid")
-	  session.Delete("username")
-	  session.Save()
+		session.Save()
 	}
 	ctx.Redirect(http.StatusSeeOther, "/login")
 }

@@ -27,7 +27,7 @@ type FormatedTask struct {
 }
 
 const FORMAT_LIST = "2006-01-02T15:04"
-const FORMAT_HTML = "2006-01-02T15:04"
+const FORMAT_HTML = "2006/01/02 15:04"
 
 func formatTask(task database.Task, db *sqlx.DB, userid uint64) (FormatedTask, error) {
 	var ftask FormatedTask
@@ -100,7 +100,6 @@ func formatTasks(tasks []database.Task, ctx *gin.Context) ([]FormatedTask, error
 func formatTasksWithOption(tasks []database.Task, ctx *gin.Context) ([]FormatedTask, error) {
 	var ftasksWO []FormatedTask
 
-	deadline, _ := ctx.GetQuery("deadline")
 	sort, _ := ctx.GetQuery("sort")
 
 	ftasks, err := formatTasks(tasks, ctx)
@@ -108,22 +107,8 @@ func formatTasksWithOption(tasks []database.Task, ctx *gin.Context) ([]FormatedT
 		return ftasksWO, err
 	}
 
-	if deadline == "yes" {
-		for i:=0; i<len(ftasks); i++ {
-			if ftasks[i].HasDeadline {
-				ftasksWO = append(ftasksWO, ftasks[i])
-			}
-		}
-	} else if deadline == "no" {
-		for i:=0; i<len(ftasks); i++ {
-			if !ftasks[i].HasDeadline {
-				ftasksWO = append(ftasksWO, ftasks[i])
-			}
-		}
-	} else {
-		for i:=0; i<len(ftasks); i++ {
-			ftasksWO = append(ftasksWO, ftasks[i])
-		}
+	for i:=0; i<len(ftasks); i++ {
+		ftasksWO = append(ftasksWO, ftasks[i])
 	}
 
 	if sort == "reg_early" {

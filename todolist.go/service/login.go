@@ -56,6 +56,7 @@ func PostLogin(ctx *gin.Context) {
 		err = db.Get(&temp, "SELECT * FROM users WHERE username=?", username)
 		if err == nil {
 			Login(ctx, "指定されたユーザー名はすでに使用されています")
+			return
 		}
 
 		// register new user
@@ -79,7 +80,6 @@ func PostLogin(ctx *gin.Context) {
 		return
 	}
 	session.Set("userid", user.ID)
-	session.Set("username", user.Username)
 	session.Options(sessions.Options{ MaxAge: 60*60*24, }) // login remains for one day
 	session.Save()
 	ctx.Redirect(http.StatusSeeOther, "/")

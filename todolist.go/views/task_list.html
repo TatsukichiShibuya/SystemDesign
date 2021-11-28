@@ -14,8 +14,8 @@
     {{ if .Tasks }}{{ range $task := .Tasks }}
     <tr class="w3-text-teal">
         <td align="center"><a href="/task/{{ $task.ID }}">{{ $task.Title }}</a></td>
-        <td align="center" class="w3-text-teal">{{ $task.CreatedAt }}</td>
-        <td align="center" class="w3-text-teal">{{ if $task.HasDeadline }}{{ $task.Deadline }}{{ else }}-{{ end }}</td>
+        <td align="center" class="w3-text-teal">{{ $task.CreatedAt_html }}</td>
+        <td align="center" class="w3-text-teal">{{ if $task.HasDeadline }}{{ $task.Deadline_html }}{{ else }}-{{ end }}</td>
         <td align="center" {{      if eq $task.Importance 1 }} class="w3-text-teal"
                            {{ else if eq $task.Importance 2 }} class="w3-text-teal w3-large"
                            {{ else if eq $task.Importance 3 }} class="w3-text-deep-orange w3-large"
@@ -27,7 +27,7 @@
           {{ else }}-{{ end }}
         </td>
         <td align="center" class="w3-text-teal">{{ if $task.IsDone }}完了{{ else }}{{ end }}{{ if $task.IsShared }}{{ end }}</td>
-        <td align="center" class="w3-text-teal"><input type="checkbox" name="check[]" value={{ $task.ID }} id={{ $task.ID}} form="form"><td>
+        <td align="center" class="w3-text-teal"><input type="checkbox" name="check[]" value={{ $task.ID }} id={{ $task.ID }} form="form"><td>
     </tr>
     {{ end }}{{ end }}
 
